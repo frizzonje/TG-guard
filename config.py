@@ -1,8 +1,8 @@
 # Список пользователей для отслеживания (юзернеймы с @ или без)
-TRACKED = ["@lokkopy", "@F2ki52", "@yaystalfxck", "@Sunshess228", "@y4rz0r", "@Voronovshina", "@absence_of_fear", "@Vlaudic", "@ChocoRobotsAndGonOneLove_bykilla", "@btlvm", "@Ront0s", "@SeVeesh", "@MaxBaran1", "@Kanitelka21", "@semigal01", "@lilboo8", "@KKUST1", "@elisstarkovskaya", "@Shimichka"]
+TRACKED = [""]
 
 # Список пользователей в чёрном списке (их сообщения будут удаляться)
-BLACKLIST = ["@lokkopy"]
+BLACKLIST = [""]
 
 # Группа для экспорта участников (добавляются к TRACKED)
 EXPORT_GROUP = ""
