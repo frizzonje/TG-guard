@@ -1,5 +1,5 @@
 TRACKED = ["@lokkopy", "@F2ki52", "@yaystalfxck", "@Sunshess228", "@y4rz0r", "@Voronovshina", "@absence_of_fear", "@Vlaudic", "@ChocoRobotsAndGonOneLove_bykilla", "@btlvm", "@Ront0s", "@SeVeesh", "@MaxBaran1", "@Kanitelka21", "@semigal01", "@lilboo8", "@KKUST1", "@elisstarkovskaya", "@Shimichka"]
-BLACKLIST = [""]
+BLACKLIST = ["@lokkopy"]
 EXPORT_GROUP = ""
 
 DELETE_SAVED_DELAY_SECONDS = 30
