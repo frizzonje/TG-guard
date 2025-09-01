@@ -37,6 +37,384 @@ ALERT_PREFIX = "🚨🚨🚨 "  # все оповещения сохраняем
 MD = 'md'
 
 
+# --- Интерактивная настройка списков ---
+def show_list_management_menu() -> tuple:
+    """Показывает меню управления списками и возвращает обновленные списки."""
+    print("\n" + "="*60)
+    print("⚙️ Настройка списков TRACKED и BLACKLIST")
+    print("="*60)
+    
+    # Копируем списки из конфигурации
+    current_tracked = list(TRACKED)
+    current_blacklist = list(BLACKLIST)
+    
+    while True:
+        print(f"\n📋 Текущие списки:")
+        print(f"👀 TRACKED ({len(current_tracked)}): {current_tracked}")
+        print(f"🚫 BLACKLIST ({len(current_blacklist)}): {current_blacklist}")
+        print("\n" + "-"*40)
+        print("1. ✏️ Редактировать список TRACKED")
+        print("2. ✏️ Редактировать список BLACKLIST")
+        print("3. 🔄 Сбросить к настройкам из config.py")
+        print("4. ✅ Продолжить с текущими настройками")
+        print("5. 💾 Сохранить настройки в config.py")
+        print("-"*40)
+        
+        try:
+            choice = input("Выберите действие (1-5): ").strip()
+            
+            if choice == "1":
+                current_tracked = edit_tracked_list(current_tracked)
+            elif choice == "2":
+                current_blacklist = edit_blacklist_list(current_blacklist)
+            elif choice == "3":
+                current_tracked = list(TRACKED)
+                current_blacklist = list(BLACKLIST)
+                print("✅ Списки сброшены к настройкам из config.py")
+            elif choice == "4":
+                return current_tracked, current_blacklist
+            elif choice == "5":
+                save_config_to_file(current_tracked, current_blacklist)
+                return current_tracked, current_blacklist
+            else:
+                print("❌ Пожалуйста, введите число от 1 до 5")
+                
+        except KeyboardInterrupt:
+            print("\n\n👋 Программа завершена пользователем")
+            raise SystemExit(0)
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
+
+
+def edit_tracked_list(current_list: List[str]) -> List[str]:
+    """Редактирует список TRACKED."""
+    print(f"\n✏️ Редактирование списка TRACKED")
+    print("="*40)
+    
+    while True:
+        print(f"\n📋 Текущий список TRACKED ({len(current_list)}):")
+        for i, user in enumerate(current_list, 1):
+            print(f"  {i}. {user}")
+        
+        print("\nДействия:")
+        print("1. ➕ Добавить пользователя")
+        print("2. ➖ Удалить пользователя")
+        print("3. 🔄 Очистить список")
+        print("4. ✅ Вернуться назад")
+        
+        try:
+            choice = input("Выберите действие (1-4): ").strip()
+            
+            if choice == "1":
+                username = input("Введите юзернейм (с @ или без): ").strip()
+                if username:
+                    if not username.startswith("@"):
+                        username = "@" + username
+                    if username not in current_list:
+                        current_list.append(username)
+                        print(f"✅ Добавлен: {username}")
+                    else:
+                        print(f"⚠️ {username} уже в списке")
+                else:
+                    print("❌ Юзернейм не может быть пустым")
+                    
+            elif choice == "2":
+                if not current_list:
+                    print("⚠️ Список пуст")
+                    continue
+                    
+                try:
+                    index = int(input(f"Введите номер пользователя (1-{len(current_list)}): ")) - 1
+                    if 0 <= index < len(current_list):
+                        removed = current_list.pop(index)
+                        print(f"✅ Удален: {removed}")
+                    else:
+                        print("❌ Неверный номер")
+                except ValueError:
+                    print("❌ Введите число")
+                    
+            elif choice == "3":
+                if current_list:
+                    current_list.clear()
+                    print("✅ Список очищен")
+                else:
+                    print("⚠️ Список уже пуст")
+                    
+            elif choice == "4":
+                return current_list
+            else:
+                print("❌ Пожалуйста, введите число от 1 до 4")
+                
+        except KeyboardInterrupt:
+            print("\n\n👋 Программа завершена пользователем")
+            raise SystemExit(0)
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
+
+
+def edit_blacklist_list(current_list: List[str]) -> List[str]:
+    """Редактирует список BLACKLIST."""
+    print(f"\n✏️ Редактирование списка BLACKLIST")
+    print("="*40)
+    
+    while True:
+        print(f"\n📋 Текущий список BLACKLIST ({len(current_list)}):")
+        for i, user in enumerate(current_list, 1):
+            print(f"  {i}. {user}")
+        
+        print("\nДействия:")
+        print("1. ➕ Добавить пользователя")
+        print("2. ➖ Удалить пользователя")
+        print("3. 🔄 Очистить список")
+        print("4. ✅ Вернуться назад")
+        
+        try:
+            choice = input("Выберите действие (1-4): ").strip()
+            
+            if choice == "1":
+                username = input("Введите юзернейм (с @ или без): ").strip()
+                if username:
+                    if not username.startswith("@"):
+                        username = "@" + username
+                    if username not in current_list:
+                        current_list.append(username)
+                        print(f"✅ Добавлен: {username}")
+                    else:
+                        print(f"⚠️ {username} уже в списке")
+                else:
+                    print("❌ Юзернейм не может быть пустым")
+                    
+            elif choice == "2":
+                if not current_list:
+                    print("⚠️ Список пуст")
+                    continue
+                    
+                try:
+                    index = int(input(f"Введите номер пользователя (1-{len(current_list)}): ")) - 1
+                    if 0 <= index < len(current_list):
+                        removed = current_list.pop(index)
+                        print(f"✅ Удален: {removed}")
+                    else:
+                        print("❌ Неверный номер")
+                except ValueError:
+                    print("❌ Введите число")
+                    
+            elif choice == "3":
+                if current_list:
+                    current_list.clear()
+                    print("✅ Список очищен")
+                else:
+                    print("⚠️ Список уже пуст")
+                    
+            elif choice == "4":
+                return current_list
+            else:
+                print("❌ Пожалуйста, введите число от 1 до 4")
+                
+        except KeyboardInterrupt:
+            print("\n\n👋 Программа завершена пользователем")
+            raise SystemExit(0)
+        except Exception as e:
+            print(f"❌ Ошибка: {e}")
+
+
+def save_config_to_file(tracked_list: List[str], blacklist_list: List[str]):
+    """Сохраняет обновленные списки в файл config.py."""
+    try:
+        # Читаем текущий config.py
+        with open('config.py', 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Обновляем списки в контенте
+        import re
+        
+        # Обновляем TRACKED
+        tracked_pattern = r'TRACKED = \[.*?\]'
+        tracked_replacement = f'TRACKED = {tracked_list}'
+        content = re.sub(tracked_pattern, tracked_replacement, content, flags=re.DOTALL)
+        
+        # Обновляем BLACKLIST
+        blacklist_pattern = r'BLACKLIST = \[.*?\]'
+        blacklist_replacement = f'BLACKLIST = {blacklist_list}'
+        content = re.sub(blacklist_pattern, blacklist_replacement, content, flags=re.DOTALL)
+        
+        # Сохраняем обновленный файл
+        with open('config.py', 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        print("✅ Настройки сохранены в config.py")
+        
+    except Exception as e:
+        print(f"❌ Ошибка при сохранении: {e}")
+
+
+# --- Интерактивное меню выбора режима ---
+def show_mode_selection() -> int:
+    """Показывает меню выбора режима работы и возвращает выбранный режим."""
+    print("\n" + "="*60)
+    print("🤖 TG-Guard - Выбор режима работы")
+    print("="*60)
+    print("1. 🔍 Сканирование присутствия TRACKED пользователей")
+    print("2. 🧹 Удаление ВСЕХ сообщений BLACKLIST пользователей")
+    print("3. 🚫 Удаление только НОВЫХ сообщений BLACKLIST пользователей")
+    print("4. 🔄 Комбинированный режим (все функции)")
+    print("="*60)
+    
+    while True:
+        try:
+            choice = input("Выберите режим (1-4): ").strip()
+            if choice in ['1', '2', '3', '4']:
+                return int(choice)
+            else:
+                print("❌ Пожалуйста, введите число от 1 до 4")
+        except KeyboardInterrupt:
+            print("\n\n👋 Программа завершена пользователем")
+            raise SystemExit(0)
+        except Exception:
+            print("❌ Неверный ввод. Попробуйте снова")
+
+
+# --- Режим 1: Сканирование присутствия TRACKED ---
+async def mode_tracked_scanning(client: TelegramClient, tracked_map: Dict[int, str]):
+    """Режим 1: Только сканирование присутствия TRACKED пользователей."""
+    print("\n🔍 Режим: Сканирование присутствия TRACKED пользователей")
+    print("="*50)
+    
+    if not tracked_map:
+        print("⚠️ Список TRACKED пуст. Нечего отслеживать.")
+        return
+    
+    # Регистрируем обработчик для новых вступлений в группы
+    tracked_ids = set(tracked_map.keys())
+    
+    @client.on(events.ChatAction)
+    async def on_chat_action(event: events.ChatAction.Event):
+        # Нас интересуют только join/add события и только группы
+        if not (event.user_joined or event.user_added):
+            return
+        chat = await event.get_chat()
+        if not is_group(chat):
+            return
+        users = await event.get_users()
+        for user in users:
+            if user.id in tracked_ids:
+                await send_to_saved(
+                    client,
+                    f"{ALERT_PREFIX}**Обнаружен пользователь!**\n\n"
+                    f"**Кто:** `{get_display_name(user)}`\n"
+                    f"**Где:** «*{get_display_name(chat)}*»",
+                    keep=True
+                )
+    
+    # Выполняем начальное сканирование
+    await initial_presence_scan(client, tracked_map)
+    print("✅ Режим сканирования активирован. Ожидаю новых вступлений...")
+
+
+# --- Режим 2: Удаление ВСЕХ сообщений BLACKLIST ---
+async def mode_blacklist_purge_all(client: TelegramClient, blacklist_map: Dict[int, str]):
+    """Режим 2: Удаление ВСЕХ сообщений BLACKLIST пользователей."""
+    print("\n🧹 Режим: Удаление ВСЕХ сообщений BLACKLIST пользователей")
+    print("="*50)
+    
+    if not blacklist_map:
+        print("⚠️ Список BLACKLIST пуст. Нечего удалять.")
+        return
+    
+    # Регистрируем обработчики для новых сообщений
+    blacklist_ids = set(blacklist_map.keys())
+    
+    @client.on(events.NewMessage(from_users=list(blacklist_ids), incoming=True))
+    async def on_blacklisted_incoming(event: events.NewMessage.Event):
+        try:
+            chat = await event.get_chat()
+            # Игнорируем каналы
+            if is_broadcast_channel(chat):
+                return
+            await event.delete(revoke=False)
+            print(f"🚫 Удалено новое сообщение от {get_display_name(await event.get_sender())}")
+        except Exception as e:
+            print(f"❌ Ошибка при удалении сообщения: {e}")
+
+    @client.on(events.MessageEdited(from_users=list(blacklist_ids)))
+    async def on_blacklisted_edited(event: events.MessageEdited.Event):
+        try:
+            chat = await event.get_chat()
+            if is_broadcast_channel(chat):
+                return
+            await event.delete(revoke=False)
+            print(f"🚫 Удалено отредактированное сообщение от {get_display_name(await event.get_sender())}")
+        except Exception as e:
+            print(f"❌ Ошибка при удалении отредактированного сообщения: {e}")
+    
+    # Выполняем начальную зачистку всех существующих сообщений
+    print("🧹 Начинаю зачистку всех существующих сообщений...")
+    for user_id, user_name in blacklist_map.items():
+        await purge_user_everywhere(client, user_id, user_name)
+    
+    print("✅ Режим полной зачистки активирован. Удаляю новые сообщения...")
+
+
+# --- Режим 3: Удаление только НОВЫХ сообщений BLACKLIST ---
+async def mode_blacklist_new_only(client: TelegramClient, blacklist_map: Dict[int, str]):
+    """Режим 3: Удаление только НОВЫХ сообщений BLACKLIST пользователей."""
+    print("\n🚫 Режим: Удаление только НОВЫХ сообщений BLACKLIST пользователей")
+    print("="*50)
+    
+    if not blacklist_map:
+        print("⚠️ Список BLACKLIST пуст. Нечего удалять.")
+        return
+    
+    # Регистрируем обработчики только для новых сообщений
+    blacklist_ids = set(blacklist_map.keys())
+    
+    @client.on(events.NewMessage(from_users=list(blacklist_ids), incoming=True))
+    async def on_blacklisted_incoming(event: events.NewMessage.Event):
+        try:
+            chat = await event.get_chat()
+            # Игнорируем каналы
+            if is_broadcast_channel(chat):
+                return
+            await event.delete(revoke=False)
+            sender = await event.get_sender()
+            chat_name = get_display_name(chat)
+            print(f"🚫 Удалено новое сообщение от {get_display_name(sender)} в {chat_name}")
+        except Exception as e:
+            print(f"❌ Ошибка при удалении сообщения: {e}")
+
+    @client.on(events.MessageEdited(from_users=list(blacklist_ids)))
+    async def on_blacklisted_edited(event: events.MessageEdited.Event):
+        try:
+            chat = await event.get_chat()
+            if is_broadcast_channel(chat):
+                return
+            await event.delete(revoke=False)
+            sender = await event.get_sender()
+            chat_name = get_display_name(chat)
+            print(f"🚫 Удалено отредактированное сообщение от {get_display_name(sender)} в {chat_name}")
+        except Exception as e:
+            print(f"❌ Ошибка при удалении отредактированного сообщения: {e}")
+    
+    print("✅ Режим удаления новых сообщений активирован. Исторические сообщения не затрагиваются.")
+
+
+# --- Режим 4: Комбинированный режим ---
+async def mode_combined(client: TelegramClient, tracked_map: Dict[int, str], blacklist_map: Dict[int, str]):
+    """Режим 4: Комбинированный режим - все функции."""
+    print("\n🔄 Режим: Комбинированный (все функции)")
+    print("="*50)
+    
+    # Запускаем все режимы одновременно
+    if tracked_map:
+        await mode_tracked_scanning(client, tracked_map)
+    
+    if blacklist_map:
+        # В комбинированном режиме используем полную зачистку
+        await mode_blacklist_purge_all(client, blacklist_map)
+    
+    print("✅ Комбинированный режим активирован. Все функции работают одновременно.")
+
+
 # --- Вспомогательные функции типов чатов ---
 def is_broadcast_channel(entity) -> bool:
     """Канал (broadcast), НЕ супергруппа."""
@@ -272,76 +650,37 @@ async def get_users_from_group(client: TelegramClient, group_identifier: Union[s
 # --- Основная логика ---
 async def main():
     print("🚀 Запускаю Telegram-клиент...")
+    
+    # Показываем меню настройки списков
+    print("\n" + "="*60)
+    print("🤖 TG-Guard - Настройка и запуск")
+    print("="*60)
+    
+    # Настройка списков
+    tracked_list, blacklist_list = show_list_management_menu()
+    
+    # Показываем меню выбора режима
+    selected_mode = show_mode_selection()
+    
     async with TelegramClient(SESSION, API_ID, API_HASH) as client:
         me = await client.get_me()
         me_id = me.id
         print(f"✅ Вход выполнен как: {get_display_name(me)}")
 
         # 1) Формируем итоговый набор отслеживаемых (TRACKED + EXPORT_GROUP)
-        tracked_users_set = set(TRACKED)
+        tracked_users_set = set(tracked_list)  # Используем настроенный список
         exported_users = await get_users_from_group(client, EXPORT_GROUP)
         tracked_users_set.update(exported_users)
 
         # 2) Резолвим юзернеймы в ID
         tracked_map = await resolve_users(client, tracked_users_set)
-        blacklist_map = await resolve_users(client, BLACKLIST)
-
-        tracked_ids: Set[int] = set(tracked_map.keys())
-        blacklist_ids: Set[int] = set(blacklist_map.keys())
+        blacklist_map = await resolve_users(client, blacklist_list)  # Используем настроенный список
 
         print("\n--- Итоговые списки ---")
         print(f"👀 Отслеживаем ({len(tracked_map)}): {list(tracked_map.values())}")
         print(f"🚫 Чёрный список ({len(blacklist_map)}): {list(blacklist_map.values())}\n")
 
-        # 3) Регистрация обработчиков
-
-        # 3.1) Мгновенное удаление сообщений от пользователей из чёрного списка (ЛС и группы, без каналов)
-        if blacklist_ids:
-            @client.on(events.NewMessage(from_users=list(blacklist_ids), incoming=True))
-            async def on_blacklisted_incoming(event: events.NewMessage.Event):
-                try:
-                    chat = await event.get_chat()
-                    # Игнорируем каналы
-                    if is_broadcast_channel(chat):
-                        return
-                    await event.delete(revoke=False)
-                    # Быстро и молча удаляем, без лишних логов
-                except Exception:
-                    pass
-
-            # На случай, если сообщение было отредактировано до удаления
-            @client.on(events.MessageEdited(from_users=list(blacklist_ids)))
-            async def on_blacklisted_edited(event: events.MessageEdited.Event):
-                try:
-                    chat = await event.get_chat()
-                    if is_broadcast_channel(chat):
-                        return
-                    await event.delete(revoke=False)
-                except Exception:
-                    pass
-
-        # 3.2) Оповещение, если отслеживаемый пользователь вступил в группу
-        if tracked_ids:
-            @client.on(events.ChatAction)
-            async def on_chat_action(event: events.ChatAction.Event):
-                # Нас интересуют только join/add события и только группы
-                if not (event.user_joined or event.user_added):
-                    return
-                chat = await event.get_chat()
-                if not is_group(chat):
-                    return
-                users = await event.get_users()
-                for user in users:
-                    if user.id in tracked_ids:
-                        await send_to_saved(
-                            client,
-                            f"{ALERT_PREFIX}**Обнаружен пользователь!**\n\n"
-                            f"**Кто:** `{get_display_name(user)}`\n"
-                            f"**Где:** «*{get_display_name(chat)}*»",
-                            keep=True
-                        )
-
-        # 3.3) Автоудаление любых сообщений в 'Избранном' (кроме оповещений и закрепов)
+        # 3) Регистрация обработчиков автоудаления в 'Избранном' (если включено)
         if DELETE_SAVED_MESSAGES:
             @client.on(events.NewMessage(incoming=True, outgoing=True))
             async def on_saved_new_message(event: events.NewMessage.Event):
@@ -364,17 +703,18 @@ async def main():
                 except Exception:
                     pass
 
-        # 4) Стартовые действия
-        if ON_START_PURGE and blacklist_ids:
-            print("[START] 🧹 Проводим начальную зачистку по чёрному списку...")
-            for user_id, user_name in blacklist_map.items():
-                await purge_user_everywhere(client, user_id, user_name)
-
-        if tracked_ids:
-            # Сообщения скана сами будут удалены, т.к. send_to_saved планирует автоудаление
-            await initial_presence_scan(client, tracked_map)
+        # 4) Запускаем выбранный режим
+        if selected_mode == 1:
+            await mode_tracked_scanning(client, tracked_map)
+        elif selected_mode == 2:
+            await mode_blacklist_purge_all(client, blacklist_map)
+        elif selected_mode == 3:
+            await mode_blacklist_new_only(client, blacklist_map)
+        elif selected_mode == 4:
+            await mode_combined(client, tracked_map, blacklist_map)
 
         print("\n✅ Скрипт запущен и слушает события...")
+        print("💡 Для остановки нажмите Ctrl+C")
         await client.run_until_disconnected()
 
 
