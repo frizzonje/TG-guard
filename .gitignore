@@ -1,3 +1,4 @@
 __pycache__/config.cpython-313.pyc
 my_user_session.session
 .env
+my_user_session.session-journal

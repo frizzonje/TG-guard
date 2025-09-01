@@ -1,4 +1,3 @@
-# main.py
 import asyncio
 import os
 from typing import Iterable, List, Set, Dict, Union
@@ -9,7 +8,10 @@ from telethon.tl.types import Channel, Chat, User, Dialog
 from telethon.utils import get_display_name
 
 # --- Загрузка конфигурации ---
-from config import TRACKED, BLACKLIST, EXPORT_GROUP, DELETE_CHUNK, DELETE_PAUSE, ON_START_PURGE
+from config import (
+    TRACKED, BLACKLIST, EXPORT_GROUP, DELETE_CHUNK, DELETE_PAUSE, ON_START_PURGE,
+    DELETE_SAVED_MESSAGES, DELETE_SAVED_DELAY_SECONDS
+)
 
 load_dotenv()
 
@@ -58,6 +60,20 @@ async def resolve_users(client: TelegramClient, ids_or_usernames: Iterable) -> D
         except Exception as e:
             print(f"[WARN] Не удалось определить пользователя '{item}': {e}")
     return resolved
+
+
+async def schedule_saved_message_deletion(event: events.NewMessage.Event, delay: int):
+    """
+    Асинхронно ждет указанное время и затем удаляет сообщение.
+    Эта функция запускается как фоновая задача, чтобы не блокировать основной код.
+    """
+    try:
+        await asyncio.sleep(delay)
+        await event.delete(revoke=False)
+        print(f"[AUTO-DELETE] ✅ Сообщение {event.id} в 'Избранном' удалено.")
+    except Exception as e:
+        # Сообщение могло быть уже удалено вручную, это не критичная ошибка
+        print(f"[AUTO-DELETE] [WARN] Не удалось удалить сообщение {event.id}: {e}")
 
 
 async def delete_ids_for_me(client: TelegramClient, entity, ids: List[int]) -> int:
@@ -121,19 +137,17 @@ async def initial_presence_scan(client: TelegramClient, tracked_map: Dict[int, s
     print("[SCAN] 🕵️ Проверяю текущее присутствие отслеживаемых пользователей (только в чатах)...")
     found_count = 0
     async for dialog in client.iter_dialogs():
-        # >>> ИЗМЕНЕНИЕ ЗДЕСЬ: Проверяем только чаты
         if is_group(dialog.entity):
             for user_id, user_name in tracked_map.items():
                 try:
-                    # Этот вызов вызовет ошибку, если пользователя в чате нет
                     await client(functions.channels.GetParticipantRequest(channel=dialog.entity, participant=user_id))
                     message = f"ℹ️ **Уже в группе:** `{user_name}` состоит в чате «*{dialog.name}*»"
                     await client.send_message("me", message, parse_mode='md')
                     found_count += 1
                 except errors.UserNotParticipantError:
-                    pass  # Всё в порядке, пользователя просто нет в этой группе
+                    pass
                 except Exception:
-                    pass # Другие возможные ошибки (например, нет прав)
+                    pass
     print(f"[SCAN] ✅ Проверка завершена. Найдено совпадений: {found_count}.")
 
 
@@ -147,7 +161,6 @@ async def get_users_from_group(client: TelegramClient, group_identifier: Union[s
         group_entity = await client.get_entity(group_identifier)
         participants = await client.get_participants(group_entity)
         
-        # Собираем юзернеймы, если они есть. Можно добавить и ID, если нужно.
         usernames = {f"@{user.username}" for user in participants if user.username}
         print(f"[EXPORT] ✅ Найдено {len(usernames)} уникальных пользователей с юзернеймами.")
         return usernames
@@ -191,14 +204,14 @@ async def main():
         # 4. Регистрируем обработчики событий
         @client.on(events.ChatAction)
         async def on_chat_action(event: events.ChatAction.Event):
-            if event.user_joined or event.user_added:
-                # >>> ИЗМЕНЕНИЕ ЗДЕСЬ: Проверяем, что событие произошло в чате
-                chat = await event.get_chat()
-                if not is_group(chat):
-                    return
-
-                user = await event.get_user()
-                if user and user.id in tracked_ids:
+            if not (event.user_joined or event.user_added):
+                return
+            chat = await event.get_chat()
+            if not is_group(chat):
+                return
+            users = await event.get_users()
+            for user in users:
+                if user.id in tracked_ids:
                     await client.send_message(
                         "me",
                         f"🚨🚨🚨 **Обнаружен пользователь!** 🚨🚨🚨\n\n"
@@ -209,11 +222,27 @@ async def main():
 
         @client.on(events.NewMessage)
         async def on_new_message(event: events.NewMessage.Event):
+            # 1. Логика для черного списка
             if event.sender_id in blacklist_ids:
                 try:
-                    await event.delete(use_for_everyone=False)
+                    await event.delete(revoke=False)
                 except Exception:
                     pass # Ошибки тут не критичны
+            
+            # 2. Новая логика для автоудаления сообщений в "Избранном"
+            # Проверяем, включена ли опция и является ли чат диалогом с самим собой
+            if DELETE_SAVED_MESSAGES and event.chat_id == me.id:
+                if event.raw_text.startswith("🚨🚨🚨 **Обнаружен пользователь!**"):
+                    print(f"[AUTO-DELETE] ℹ️ Сообщение {event.id} является оповещением - не удаляем.")
+                else:
+                    print(
+                        f"[AUTO-DELETE] ⏳ Сообщение {event.id} в 'Избранном' будет удалено "
+                        f"через {DELETE_SAVED_DELAY_SECONDS} сек."
+                    )
+                    # Запускаем удаление в фоне, чтобы не блокировать обработчик новых сообщений
+                    asyncio.create_task(
+                        schedule_saved_message_deletion(event, DELETE_SAVED_DELAY_SECONDS)
+                    )
 
         print("\n✅ Скрипт запущен и слушает события...")
         await client.run_until_disconnected()
