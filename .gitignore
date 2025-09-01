@@ -2,3 +2,14 @@ __pycache__/config.cpython-313.pyc
 my_user_session.session
 .env
 my_user_session.session-journal
+__pycache__/config_manager.cpython-313.pyc
+__pycache__/message_handler.cpython-313.pyc
+__pycache__/modes.cpython-313.pyc
+__pycache__/telegram_client.cpython-313.pyc
+.gitignore
+__pycache__/utils.cpython-313.pyc
+__pycache__/ui_manager.cpython-313.pyc
+modules/__pycache__/__init__.cpython-313.pyc
+modules/__pycache__/config_manager.cpython-313.pyc
+modules/__pycache__/message_handler.cpython-313.pyc
+modules/__pycache__/
