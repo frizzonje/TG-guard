@@ -7,7 +7,7 @@ from .utils import resolve_users
 from .message_handler import setup_saved_messages_auto_delete
 from .modes import (
     mode_tracked_scanning, mode_blacklist_purge_all, 
-    mode_blacklist_new_only, mode_combined, get_users_from_group
+    mode_blacklist_new_only, mode_combined, mode_self_purge, get_users_from_group
 )
 
 
@@ -21,7 +21,7 @@ async def run_telegram_client():
     print("="*60)
     
     # Настройка списков
-    tracked_list, blacklist_list = show_list_management_menu()
+    tracked_list, blacklist_list, exclusion_list = show_list_management_menu()
     
     # Показываем меню выбора режима
     selected_mode = show_mode_selection()
@@ -40,10 +40,12 @@ async def run_telegram_client():
         # 2) Резолвим юзернеймы в ID
         tracked_map = await resolve_users(client, tracked_users_set)
         blacklist_map = await resolve_users(client, blacklist_list)  # Используем настроенный список
+        exclusion_map = await resolve_users(client, exclusion_list)  # Резолвим список исключений
 
         print("\n--- Итоговые списки ---")
         print(f"👀 Отслеживаем ({len(tracked_map)}): {list(tracked_map.values())}")
-        print(f"🚫 Чёрный список ({len(blacklist_map)}): {list(blacklist_map.values())}\n")
+        print(f"🚫 Чёрный список ({len(blacklist_map)}): {list(blacklist_map.values())}")
+        print(f"🔒 Исключения ({len(exclusion_map)}): {list(exclusion_map.values())}\n")
 
         # 3) Регистрация обработчиков автоудаления в 'Избранном' (если включено)
         setup_saved_messages_auto_delete(client, me_id)
@@ -57,6 +59,9 @@ async def run_telegram_client():
             await mode_blacklist_new_only(client, blacklist_map)
         elif selected_mode == 4:
             await mode_combined(client, tracked_map, blacklist_map)
+        elif selected_mode == 5:
+            await mode_self_purge(client, me_id, exclusion_map)
+            return  # Выходим после самоочистки, не слушаем события
 
         print("\n✅ Скрипт запущен и слушает события...")
         print("💡 Для остановки нажмите Ctrl+C")

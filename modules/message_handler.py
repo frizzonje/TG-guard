@@ -1,5 +1,5 @@
 import asyncio
-from typing import List
+from typing import List, Dict
 from telethon import TelegramClient, events, errors
 from telethon.tl.types import Message
 from telethon.utils import get_display_name
@@ -100,6 +100,85 @@ async def purge_user_everywhere(client: TelegramClient, user_id: int, user_name:
         client,
         f"✅ Зачистка завершена: удалено **{total_deleted_count}** сообщений от *{user_name}*.",
         keep=False
+    )
+
+
+async def purge_own_messages_everywhere(client: TelegramClient, me_id: int, exclusion_map: Dict[int, str]):
+    """
+    Удаляет все собственные сообщения во всех чатах,
+    кроме тех, что с пользователями из списка исключений.
+    """
+    from .utils import is_personal, is_group
+    
+    print(f"[SELF-PURGE] ⚠️  Начинаю самоочистку всех сообщений...")
+    print(f"[SELF-PURGE] 🔒 Исключения ({len(exclusion_map)}): {list(exclusion_map.values())}")
+    
+    total_deleted_count = 0
+    dialog_count = 0
+    excluded_dialogs = 0
+    
+    try:
+        async for dialog in client.iter_dialogs():
+            entity = dialog.entity
+            
+            # Сканим только ЛС и группы (ни одного канала)
+            if not (is_personal(entity) or is_group(entity)):
+                continue
+                
+            dialog_count += 1
+            
+            # Проверяем, не в списке ли исключений этот чат
+            should_exclude = False
+            
+            if is_personal(entity):
+                # Личный чат - проверяем ID пользователя
+                if entity.id in exclusion_map:
+                    should_exclude = True
+                    excluded_dialogs += 1
+                    print(f"[SELF-PURGE] 🔒 Пропускаю ЛС с {exclusion_map[entity.id]}")
+            
+            if should_exclude:
+                continue
+            
+            print(f"\r[SELF-PURGE] ⚙️ Проверяю диалог {dialog_count}: {dialog.name}", end="")
+            
+            ids_to_delete: List[int] = []
+            try:
+                # Находим все сообщения от меня
+                async for msg in client.iter_messages(entity, from_user=me_id):
+                    # Пропускаем оповещения в Избранном
+                    if entity.id == me_id:  # Избранное
+                        config = get_config()
+                        text = msg.raw_text or ""
+                        if is_alert_message_text(text, config['ALERT_PREFIX']):
+                            continue
+                    
+                    ids_to_delete.append(msg.id)
+                
+                if ids_to_delete:
+                    deleted_in_chat = await delete_ids_for_me(client, entity, ids_to_delete)
+                    total_deleted_count += deleted_in_chat
+                    
+            except Exception as e:
+                # Некоторые чаты могут быть недоступны, это не критично
+                print(f"\n[SELF-PURGE] ⚠️  Ошибка в диалоге '{dialog.name}': {e}")
+                pass
+                
+    finally:
+        print()  # Перевод строки после завершения цикла
+    
+    print(f"[SELF-PURGE] ✅ Самоочистка завершена!")
+    print(f"[SELF-PURGE] 📈 Обработано диалогов: {dialog_count}")
+    print(f"[SELF-PURGE] 🔒 Пропущено (исключения): {excluded_dialogs}")
+    print(f"[SELF-PURGE] 🗑️ Удалено сообщений: {total_deleted_count}")
+    
+    await send_to_saved(
+        client,
+        f"✅ **Самоочистка завершена!**\n\n"
+        f"📈 **Обработано диалогов:** {dialog_count}\n"
+        f"🔒 **Пропущено (исключения):** {excluded_dialogs}\n"
+        f"🗝 **Удалено сообщений:** **{total_deleted_count}**",
+        keep=True
     )
 
 

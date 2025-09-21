@@ -4,7 +4,7 @@ from telethon.utils import get_display_name
 
 from .config_manager import get_config
 from .utils import is_group, is_broadcast_channel, is_personal, is_supergroup, is_basic_group
-from .message_handler import send_to_saved, purge_user_everywhere
+from .message_handler import send_to_saved, purge_user_everywhere, purge_own_messages_everywhere
 
 
 async def mode_tracked_scanning(client: TelegramClient, tracked_map: Dict[int, str]):
@@ -210,6 +210,35 @@ async def initial_presence_scan(client: TelegramClient, tracked_map: Dict[int, s
         # if is_broadcast_channel(entity): continue
 
     print(f"[SCAN] ✅ Проверка завершена. Найдено совпадений: {found_count}.")
+
+
+async def mode_self_purge(client: TelegramClient, me_id: int, exclusion_map: Dict[int, str]):
+    """Режим 5: Удаление всех собственных сообщений, кроме исключений."""
+    print("\n🗑️ Режим: Удаление всех собственных сообщений")
+    print("="*50)
+    
+    if not exclusion_map:
+        print("⚠️ Список исключений пуст. Все сообщения будут удалены!")
+        confirm = input("🚨 Продолжить без исключений? (да/нет): ").strip().lower()
+        if confirm not in ["да", "yes", "y", "я"]:
+            print("❌ Операция отменена")
+            return
+    
+    # Показываем последнее предупреждение
+    print(f"\n🚨 ОПАСНОСТЬ! Операция необратима!")
+    print(f"🗑️ Будут удалены ВСЕ ваши сообщения во всех чатах за всё время!")
+    if exclusion_map:
+        print(f"🔒 Исключения ({len(exclusion_map)}): {list(exclusion_map.values())}")
+    
+    final_confirm = input("\nВведите 'УДАЛИТЬ ВСЁ' для подтверждения: ").strip()
+    if final_confirm != "УДАЛИТЬ ВСЁ":
+        print("❌ Операция отменена (неверное подтверждение)")
+        return
+    
+    # Запускаем самоочистку
+    await purge_own_messages_everywhere(client, me_id, exclusion_map)
+    
+    print("✅ Режим самоочистки завершён.")
 
 
 async def get_users_from_group(client: TelegramClient, group_identifier):

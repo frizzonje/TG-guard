@@ -4,7 +4,7 @@ from typing import List, Dict
 from dotenv import load_dotenv
 
 from config import (
-    TRACKED, BLACKLIST, EXPORT_GROUP, DELETE_CHUNK, DELETE_PAUSE, ON_START_PURGE,
+    TRACKED, BLACKLIST, EXCLUSION_LIST, EXPORT_GROUP, DELETE_CHUNK, DELETE_PAUSE, ON_START_PURGE,
     DELETE_SAVED_MESSAGES, DELETE_SAVED_DELAY_SECONDS
 )
 
@@ -30,7 +30,7 @@ ALERT_PREFIX = "🚨🚨🚨 "  # все оповещения сохраняем
 MD = 'md'
 
 
-def save_config_to_file(tracked_list: List[str], blacklist_list: List[str]):
+def save_config_to_file(tracked_list: List[str], blacklist_list: List[str], exclusion_list: List[str] = None):
     """Сохраняет обновленные списки в файл config.py."""
     try:
         # Читаем текущий config.py
@@ -48,6 +48,12 @@ def save_config_to_file(tracked_list: List[str], blacklist_list: List[str]):
         blacklist_replacement = f'BLACKLIST = {blacklist_list}'
         content = re.sub(blacklist_pattern, blacklist_replacement, content, flags=re.DOTALL)
         
+        # Обновляем EXCLUSION_LIST если передан
+        if exclusion_list is not None:
+            exclusion_pattern = r'EXCLUSION_LIST = \[.*?\]'
+            exclusion_replacement = f'EXCLUSION_LIST = {exclusion_list}'
+            content = re.sub(exclusion_pattern, exclusion_replacement, content, flags=re.DOTALL)
+        
         # Сохраняем обновленный файл
         with open('config.py', 'w', encoding='utf-8') as f:
             f.write(content)
@@ -58,6 +64,28 @@ def save_config_to_file(tracked_list: List[str], blacklist_list: List[str]):
         print(f"❌ Ошибка при сохранении: {e}")
 
 
+def save_exclusion_config_to_file(exclusion_list: List[str]):
+    """Сохраняет только список исключений в файл config.py."""
+    try:
+        # Читаем текущий config.py
+        with open('config.py', 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Обновляем EXCLUSION_LIST
+        exclusion_pattern = r'EXCLUSION_LIST = \[.*?\]'
+        exclusion_replacement = f'EXCLUSION_LIST = {exclusion_list}'
+        content = re.sub(exclusion_pattern, exclusion_replacement, content, flags=re.DOTALL)
+        
+        # Сохраняем обновленный файл
+        with open('config.py', 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        print("✅ Список исключений сохранен в config.py")
+        
+    except Exception as e:
+        print(f"❌ Ошибка при сохранении списка исключений: {e}")
+
+
 def get_config():
     """Возвращает текущую конфигурацию."""
     return {
@@ -66,6 +94,7 @@ def get_config():
         'SESSION': SESSION,
         'TRACKED': TRACKED,
         'BLACKLIST': BLACKLIST,
+        'EXCLUSION_LIST': EXCLUSION_LIST,
         'EXPORT_GROUP': EXPORT_GROUP,
         'DELETE_CHUNK': DELETE_CHUNK,
         'DELETE_PAUSE': DELETE_PAUSE,
